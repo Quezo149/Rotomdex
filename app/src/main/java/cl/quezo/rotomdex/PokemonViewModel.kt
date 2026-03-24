@@ -9,7 +9,7 @@ class PokemonViewModel : ViewModel() {
 
     var pokemonList = mutableStateOf<List<PokemonListEntry>>(emptyList())
         private set
-    var isLoading = mutableStateOf(true)
+    var isLoading = mutableStateOf(false)
         private set
     var errorMsg = mutableStateOf("")
         private set
@@ -19,34 +19,54 @@ class PokemonViewModel : ViewModel() {
     var isDetailLoading = mutableStateOf(false)
         private set
 
+    // --- NUEVAS VARIABLES PARA PAGINACIÓN ---
+    private var offset = 0
+    private val limit = 20
+    var isPaginating = mutableStateOf(false) // Para mostrar la ruedita abajo
+        private set
+    var endReached = mutableStateOf(false) // Por si llegamos al último Pokémon existente
+        private set
+
     init {
-        fetchPokemon()
+        loadPokemonPaginated()
     }
 
-    private fun fetchPokemon() {
+    // --- NUEVA FUNCIÓN DE PAGINACIÓN ---
+    fun loadPokemonPaginated() {
+        // Evitamos hacer spam a la API si ya estamos cargando o no hay más datos
+        if (isLoading.value || isPaginating.value || endReached.value) return
+
         viewModelScope.launch {
             try {
-                isLoading.value = true
-                val response = RetrofitClient.apiService.getPokemonList(limit = 151)
-                pokemonList.value = response.results
+                // Si es la primera vez, carga principal. Si no, carga secundaria (paginación)
+                if (offset == 0) isLoading.value = true else isPaginating.value = true
+
+                val response = RetrofitClient.apiService.getPokemonList(limit = limit, offset = offset)
+
+                if (response.results.isEmpty()) {
+                    endReached.value = true
+                } else {
+                    offset += limit
+                    // Magia aquí: Sumamos la lista vieja con la nueva
+                    pokemonList.value = pokemonList.value + response.results
+                }
             } catch (e: Exception) {
                 errorMsg.value = "Error de conexión: ${e.message}"
             } finally {
                 isLoading.value = false
+                isPaginating.value = false
             }
         }
     }
 
-    // --- NUEVA FUNCIÓN: BUSCAR DETALLES DE UN POKÉMON ---
     fun fetchPokemonDetail(name: String) {
         viewModelScope.launch {
             try {
                 isDetailLoading.value = true
-                // La API de Pokémon es estricta: exige que los nombres vayan en minúsculas
                 val response = RetrofitClient.apiService.getPokemonDetail(name.lowercase())
                 pokemonDetails.value = response
             } catch (e: Exception) {
-                // Si falla (ej. sin internet), por ahora solo lo atrapamos silenciosamente en el MVP
+                // Silencioso en el MVP
             } finally {
                 isDetailLoading.value = false
             }
