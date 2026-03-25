@@ -35,6 +35,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cl.quezo.rotomdex.PokemonViewModel
 import coil.compose.AsyncImage
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,11 +71,15 @@ fun PokemonListScreen(viewModel: PokemonViewModel, navController: NavController)
                                 }
                             }
 
+                            val variants = viewModel.variantsSet.value
+
                             PokemonCard(
                                 name = pokemon.name.replaceFirstChar { it.uppercase() },
                                 number = pokemon.number,
                                 type = "Pokémon",
                                 imageUrl = pokemon.imageUrl,
+                                // Le preguntamos al Set si el ID actual está en tu GitHub
+                                hasVariant = variants.contains(pokemon.number),
                                 onClick = { navController.navigate("detalle/${pokemon.name}") }
                             )
                         }
@@ -96,7 +103,7 @@ fun PokemonListScreen(viewModel: PokemonViewModel, navController: NavController)
 }
 
 @Composable
-fun PokemonCard(name: String, number: Int, type: String, imageUrl: String, onClick: () -> Unit) {
+fun PokemonCard(name: String, number: Int, type: String, imageUrl: String, hasVariant: Boolean, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -111,7 +118,21 @@ fun PokemonCard(name: String, number: Int, type: String, imageUrl: String, onCli
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(text = "#${number.toString().padStart(3, '0')}", fontWeight = FontWeight.Bold, color = Color.DarkGray)
-                Text(text = name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+
+                // Aquí va la magia: Un Row para poner el nombre y el ícono juntos
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    if (hasVariant) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Star, // Usamos una estrella nativa por ahora
+                            contentDescription = "Tiene variantes",
+                            tint = Color(0xFF9C27B0), // Un morado oscuro, como me mencionaste que te gusta
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
                 Text(text = type, fontSize = 14.sp, color = Color.Gray)
             }
         }

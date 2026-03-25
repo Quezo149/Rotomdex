@@ -5,6 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 data class PokemonResponse (
     val results: List<PokemonListEntry>
@@ -22,15 +23,21 @@ data class PokemonListEntry (
 }
 
 interface PokeApiService {
-    @GET("pokemon")
+    @GET("pokemon-species")
     suspend fun getPokemonList(
         @Query("limit") limit: Int = 10,
         @Query("offset") offset: Int = 0
     ): PokemonResponse
+
     @GET("pokemon/{name}")
     suspend fun getPokemonDetail(
         @Path("name") name: String
     ): PokemonDetailResponse
+
+    @GET
+    suspend fun getVariantsConfig(
+        @Url url: String
+    ): RemoteConfigResponse
 }
 
 object RetrofitClient {
@@ -58,4 +65,8 @@ data class TypeSlot(
 
 data class TypeDetail(
     val name: String
+)
+
+data class RemoteConfigResponse(
+    val has_variants: List<Int>
 )

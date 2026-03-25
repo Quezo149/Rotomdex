@@ -19,6 +19,9 @@ class PokemonViewModel : ViewModel() {
     var isDetailLoading = mutableStateOf(false)
         private set
 
+    var variantsSet = mutableStateOf<Set<Int>>(emptySet())
+        private set
+
     // --- NUEVAS VARIABLES PARA PAGINACIÓN ---
     private var offset = 0
     private val limit = 20
@@ -29,6 +32,7 @@ class PokemonViewModel : ViewModel() {
 
     init {
         loadPokemonPaginated()
+        fetchRemoteConfig()
     }
 
     // --- NUEVA FUNCIÓN DE PAGINACIÓN ---
@@ -75,5 +79,20 @@ class PokemonViewModel : ViewModel() {
 
     fun clearPokemonDetail() {
         pokemonDetails.value = null
+    }
+
+    private fun fetchRemoteConfig() {
+        viewModelScope.launch {
+            try {
+                // Le pasamos tu URL cruda exacta
+                val response = RetrofitClient.apiService.getVariantsConfig(
+                    "https://raw.githubusercontent.com/Quezo149/Rotomdex/master/variants.json"
+                )
+                // Convertimos la Lista a un Set para máxima eficiencia
+                variantsSet.value = response.has_variants.toSet()
+            } catch (e: Exception) {
+                // Si falla (ej. GitHub caído), simplemente no se mostrarán los iconos
+            }
+        }
     }
 }
